@@ -24,7 +24,7 @@ npx  tsc
 ```bash
 node qrcode.js
 ```
-Then, you will see a newly created file. Open it to view the qrcode.
+Then, you will see a newly created file called `QR_Code_Solution_0.bmp`. Open it to view the qrcode.
 <img width="442" alt="image" src="https://github.com/user-attachments/assets/ffac747d-d714-4cd7-935f-c569fdccf398" />
 
 **Running test**

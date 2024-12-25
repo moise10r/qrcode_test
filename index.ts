@@ -118,10 +118,11 @@ function createBMPFromGrid(grid: number[], filename: string, cellSize = 16) {
 }
 
 /**
- * @param {number[]} grid - The initial grid represented as a 1D array
+ *
+ * @param {number[]} grid - The initial grid represented as a 1D array.
  * @param {number[]} columns - An array specifying the number of filled cells (1s) required in each column.
  * @param {number[]} rows - An array specifying the number of filled cells (1s) required in each row.
- * @returns {number[][]} - An array of all possible solutions, where each solution is a valid grid represented as a 1D array.
+ * @returns {number[][]} - An array of all possible solutions.
  */
 export function solve(
   grid: number[],
@@ -132,112 +133,98 @@ export function solve(
   const numCols = columns.length;
   const solutions: number[][] = [];
 
-  /**
-   * Checks if the current grid satisfies the constraints partially.
-   *
-   * @param {number[]} grid - The current state of the grid.
-   * @returns {boolean} - Returns true if the grid does not violate any constraints, otherwise false.
-   */
-  function isValid(grid: number[]): boolean {
+  // Pre-calculate available cells
+  const availableRows = [...rows];
+  const availableCols = [...columns];
+
+  for (let i = 0; i < grid.length; i++) {
+    if (grid[i] === 1) {
+      const row = Math.floor(i / numCols);
+      const col = i % numCols;
+      availableRows[row]--;
+      availableCols[col]--;
+    }
+  }
+
+  function isValid(rowCounts: number[], colCounts: number[]): boolean {
     for (let i = 0; i < numRows; i++) {
-      const row = grid.slice(i * numCols, (i + 1) * numCols);
-      let rowCount = 0;
-      for (const cell of row) {
-        if (cell === 1) {
-          rowCount += 1;
-        }
-      }
-      if (rowCount > rows[i]) {
-        return false;
-      }
+      if (rowCounts[i] > rows[i]) return false;
     }
-
     for (let j = 0; j < numCols; j++) {
-      let colCount = 0;
-      for (let i = 0; i < numRows; i++) {
-        if (grid[i * numCols + j] === 1) {
-          colCount += 1;
-        }
-      }
-      if (colCount > columns[j]) {
-        return false;
-      }
+      if (colCounts[j] > columns[j]) return false;
     }
-
     return true;
   }
 
-  /**
-   * Checks if the current grid fully satisfies the constraints.
-   *
-   * @param {number[]} grid - The current state of the grid.
-   * @returns {boolean} - Returns true if the grid fully satisfies all row and column constraints, otherwise false.
-   */
-  function isComplete(grid: number[]): boolean {
+  function isComplete(rowCounts: number[], colCounts: number[]): boolean {
     for (let i = 0; i < numRows; i++) {
-      const row = grid.slice(i * numCols, (i + 1) * numCols);
-      let rowCount = 0;
-      for (const cell of row) {
-        if (cell === 1) {
-          rowCount += 1;
-        }
-      }
-      if (rowCount !== rows[i]) {
-        return false;
-      }
+      if (rowCounts[i] !== rows[i]) return false;
     }
-
     for (let j = 0; j < numCols; j++) {
-      let colCount = 0;
-      for (let i = 0; i < numRows; i++) {
-        if (grid[i * numCols + j] === 1) {
-          colCount += 1;
-        }
-      }
-      if (colCount !== columns[j]) {
-        return false;
-      }
+      if (colCounts[j] !== columns[j]) return false;
     }
-
     return true;
   }
 
-  /**
-   * Recursively explores all possible configurations of the grid.
-   *
-   * @param {number} index - The current cell index being processed.
-   * @param {number[]} currentGrid - The current state of the grid during backtracking.
-   */
-  function backtrack(index: number, currentGrid: number[]): void {
+  function backtrack(
+    index: number,
+    currentGrid: number[],
+    rowCounts: number[],
+    colCounts: number[]
+  ): void {
     if (index === grid.length) {
-      if (isComplete(currentGrid)) {
+      if (isComplete(rowCounts, colCounts)) {
         solutions.push([...currentGrid]);
       }
       return;
     }
 
     if (grid[index] !== 0) {
-      backtrack(index + 1, currentGrid);
-    } else {
-      currentGrid[index] = 0;
-      if (isValid(currentGrid)) {
-        backtrack(index + 1, currentGrid);
-      }
+      backtrack(index + 1, currentGrid, rowCounts, colCounts);
+      return;
+    }
 
+    const row = Math.floor(index / numCols);
+    const col = index % numCols;
+
+    // Try placing 0
+    backtrack(index + 1, currentGrid, [...rowCounts], [...colCounts]);
+
+    // Try placing 1 (with early constraint checks)
+    if (availableRows[row] > 0 && availableCols[col] > 0) {
+      //Early check
+      const newRowCounts = [...rowCounts];
+      newRowCounts[row]++;
+      const newColCounts = [...colCounts];
+      newColCounts[col]++;
       currentGrid[index] = 1;
-      if (isValid(currentGrid)) {
-        backtrack(index + 1, currentGrid);
-      }
 
-      currentGrid[index] = 0; // Reset for other paths
+      if (isValid(newRowCounts, newColCounts)) {
+        availableRows[row]--;
+        availableCols[col]--;
+        backtrack(index + 1, currentGrid, newRowCounts, newColCounts);
+        availableRows[row]++;
+        availableCols[col]++;
+      }
+      currentGrid[index] = 0;
     }
   }
 
-  // Start the backtracking algorithm
-  backtrack(0, [...grid]);
+  const initialRowCounts = new Array(numRows).fill(0);
+  const initialColCounts = new Array(numCols).fill(0);
+
+  for (let i = 0; i < grid.length; i++) {
+    if (grid[i] === 1) {
+      const row = Math.floor(i / numCols);
+      const col = i % numCols;
+      initialRowCounts[row]++;
+      initialColCounts[col]++;
+    }
+  }
+
+  backtrack(0, [...grid], initialRowCounts, initialColCounts);
   return solutions;
 }
-
 const solutions = solve(GRID, COLUMNS, ROWS);
 console.log(`Found ${solutions.length} solutions.`);
 

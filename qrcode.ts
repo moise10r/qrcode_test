@@ -134,9 +134,10 @@ export function solve(
   for (let i = 0; i < grid.length; i++) {
     if (grid[i] === 1) {
       const row = Math.floor(i / numCols); // Calculate row index from 1D array
-      const col = i % numCols; // Calculate column index from 1D array
-      availableRows[row]--; // Decrease remaining required 1s for the row
-      availableCols[col]--; // Decrease remaining required 1s for the column
+      const col = i % numCols;
+      // Decrease remaining required 1s for the row and column
+      availableRows[row]--;
+      availableCols[col]--;
     }
   }
 
@@ -149,10 +150,10 @@ export function solve(
     for (let j = 0; j < numCols; j++) {
       if (colCounts[j] > columns[j]) return false;
     }
-    return true; // Configuration is valid if no constraint is violated
+    return true;
   }
 
-  //  to check if the current grid configuration has fully met the constraints
+  //  TO check if the current grid configuration has fully met the constraints
   function isComplete(rowCounts: number[], colCounts: number[]): boolean {
     // Check if the number of 1s in each row and column is exactly equal to the required count
     for (let i = 0; i < numRows; i++) {
@@ -164,14 +165,13 @@ export function solve(
     return true;
   }
 
-  // Backtracking function to explore all possible grid configurations
   function backtrack(
     index: number, // Current index in the grid (1D representation)
     currentGrid: number[],
     rowCounts: number[],
     colCounts: number[]
   ): void {
-    // If we've filled all cells in the grid, check if the configuration is complete
+    // If all cells are filled in the grid, check if the configuration is complete
     if (index === grid.length) {
       if (isComplete(rowCounts, colCounts)) {
         solutions.push([...currentGrid]);
@@ -227,7 +227,7 @@ export function solve(
     }
   }
 
-  // Start the backtracking algorithm with the initial state
+  // Start  backtracking from the initial state
   backtrack(0, [...grid], initialRowCounts, initialColCounts);
 
   return solutions;

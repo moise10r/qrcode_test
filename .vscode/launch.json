@@ -6,7 +6,7 @@
       "request": "launch",
       "name": "QR_test",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/index.ts",
+      "program": "${workspaceFolder}/qrcode.ts",
       "runtimeArgs": [
         "-r",
         "ts-node/register",

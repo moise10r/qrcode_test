@@ -22,7 +22,7 @@ npx  tsc
 ```
 
 ```bash
-node  index.js
+node qrcode.js
 ```
 
 **Running test**

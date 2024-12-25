@@ -167,9 +167,9 @@ export function solve(
   // Backtracking function to explore all possible grid configurations
   function backtrack(
     index: number, // Current index in the grid (1D representation)
-    currentGrid: number[], // The current grid configuration being explored
-    rowCounts: number[], // Current row counts of 1s placed in the grid
-    colCounts: number[] // Current column counts of 1s placed in the grid
+    currentGrid: number[],
+    rowCounts: number[],
+    colCounts: number[]
   ): void {
     // If we've filled all cells in the grid, check if the configuration is complete
     if (index === grid.length) {

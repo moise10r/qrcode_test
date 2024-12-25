@@ -117,13 +117,6 @@ function createBMPFromGrid(grid: number[], filename: string, cellSize = 16) {
   fs.writeFileSync(filename, bmpBuffer);
 }
 
-/**
- *
- * @param {number[]} grid - The initial grid represented as a 1D array.
- * @param {number[]} columns - An array specifying the number of filled cells (1s) required in each column.
- * @param {number[]} rows - An array specifying the number of filled cells (1s) required in each row.
- * @returns {number[][]} - An array of all possible solutions.
- */
 export function solve(
   grid: number[],
   columns: number[],
@@ -133,30 +126,35 @@ export function solve(
   const numCols = columns.length;
   const solutions: number[][] = [];
 
-  // Pre-calculate available cells
+  // Pre-calculate available cells based on the initial grid
   const availableRows = [...rows];
   const availableCols = [...columns];
 
+  // Update the available counts based on the already filled cells (1s) in the initial grid
   for (let i = 0; i < grid.length; i++) {
     if (grid[i] === 1) {
-      const row = Math.floor(i / numCols);
-      const col = i % numCols;
-      availableRows[row]--;
-      availableCols[col]--;
+      const row = Math.floor(i / numCols); // Calculate row index from 1D array
+      const col = i % numCols; // Calculate column index from 1D array
+      availableRows[row]--; // Decrease remaining required 1s for the row
+      availableCols[col]--; // Decrease remaining required 1s for the column
     }
   }
 
+  //  check if a current grid configuration is valid so far
   function isValid(rowCounts: number[], colCounts: number[]): boolean {
+    // Check if the number of 1s in each row and column does not exceed the required count
     for (let i = 0; i < numRows; i++) {
       if (rowCounts[i] > rows[i]) return false;
     }
     for (let j = 0; j < numCols; j++) {
       if (colCounts[j] > columns[j]) return false;
     }
-    return true;
+    return true; // Configuration is valid if no constraint is violated
   }
 
+  //  to check if the current grid configuration has fully met the constraints
   function isComplete(rowCounts: number[], colCounts: number[]): boolean {
+    // Check if the number of 1s in each row and column is exactly equal to the required count
     for (let i = 0; i < numRows; i++) {
       if (rowCounts[i] !== rows[i]) return false;
     }
@@ -166,12 +164,14 @@ export function solve(
     return true;
   }
 
+  // Backtracking function to explore all possible grid configurations
   function backtrack(
-    index: number,
-    currentGrid: number[],
-    rowCounts: number[],
-    colCounts: number[]
+    index: number, // Current index in the grid (1D representation)
+    currentGrid: number[], // The current grid configuration being explored
+    rowCounts: number[], // Current row counts of 1s placed in the grid
+    colCounts: number[] // Current column counts of 1s placed in the grid
   ): void {
+    // If we've filled all cells in the grid, check if the configuration is complete
     if (index === grid.length) {
       if (isComplete(rowCounts, colCounts)) {
         solutions.push([...currentGrid]);
@@ -179,37 +179,42 @@ export function solve(
       return;
     }
 
+    // If the current cell is already filled (1), move to the next cell
     if (grid[index] !== 0) {
       backtrack(index + 1, currentGrid, rowCounts, colCounts);
       return;
     }
 
+    // Calculate the current row and column from the 1D index
     const row = Math.floor(index / numCols);
     const col = index % numCols;
 
-    // Try placing 0
+    // Try placing a 0 (skip current cell)
     backtrack(index + 1, currentGrid, [...rowCounts], [...colCounts]);
 
-    // Try placing 1 (with early constraint checks)
+    // Try placing a 1, but only if constraints allow (early checks)
     if (availableRows[row] > 0 && availableCols[col] > 0) {
-      //Early check
+      // Temporarily update the row and column counts and the grid
       const newRowCounts = [...rowCounts];
       newRowCounts[row]++;
       const newColCounts = [...colCounts];
       newColCounts[col]++;
       currentGrid[index] = 1;
 
+      // Check if placing a 1 is valid (does not violate row or column constraints)
       if (isValid(newRowCounts, newColCounts)) {
+        // Update available counts and continue with backtracking
         availableRows[row]--;
         availableCols[col]--;
         backtrack(index + 1, currentGrid, newRowCounts, newColCounts);
         availableRows[row]++;
         availableCols[col]++;
       }
-      currentGrid[index] = 0;
+      currentGrid[index] = 0; // Reset cell to 0 if not valid
     }
   }
 
+  // Initialize counts of 1s already placed in rows and columns from the initial grid
   const initialRowCounts = new Array(numRows).fill(0);
   const initialColCounts = new Array(numCols).fill(0);
 
@@ -222,9 +227,12 @@ export function solve(
     }
   }
 
+  // Start the backtracking algorithm with the initial state
   backtrack(0, [...grid], initialRowCounts, initialColCounts);
+
   return solutions;
 }
+
 const solutions = solve(GRID, COLUMNS, ROWS);
 console.log(`Found ${solutions.length} solutions.`);
 

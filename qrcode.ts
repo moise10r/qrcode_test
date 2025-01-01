@@ -27,7 +27,7 @@ export const GRID = [
   0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0,
   1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0,
   0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1,
-  1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0,
+  1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0,
   1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1,
   0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1,
   1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0,
@@ -135,6 +135,7 @@ export function solve(
     if (grid[i] === 1) {
       const row = Math.floor(i / numCols); // Calculate row index from 1D array
       const col = i % numCols;
+
       // Decrease remaining required 1s for the row and column
       availableRows[row]--;
       availableCols[col]--;
@@ -144,6 +145,7 @@ export function solve(
   //  check if a current grid configuration is valid so far
   function isValid(rowCounts: number[], colCounts: number[]): boolean {
     // Check if the number of 1s in each row and column does not exceed the required count
+
     for (let i = 0; i < numRows; i++) {
       if (rowCounts[i] > rows[i]) return false;
     }
@@ -174,7 +176,7 @@ export function solve(
     // If all cells are filled in the grid, check if the configuration is complete
     if (index === grid.length) {
       if (isComplete(rowCounts, colCounts)) {
-        solutions.push([...currentGrid]);
+        solutions.push([...currentGrid]); // Copy the current grid for the solution
       }
       return;
     }
@@ -190,27 +192,29 @@ export function solve(
     const col = index % numCols;
 
     // Try placing a 0 (skip current cell)
-    backtrack(index + 1, currentGrid, [...rowCounts], [...colCounts]);
+    backtrack(index + 1, currentGrid, rowCounts, colCounts);
 
     // Try placing a 1, but only if constraints allow (early checks)
     if (availableRows[row] > 0 && availableCols[col] > 0) {
       // Temporarily update the row and column counts and the grid
-      const newRowCounts = [...rowCounts];
-      newRowCounts[row]++;
-      const newColCounts = [...colCounts];
-      newColCounts[col]++;
+      rowCounts[row]++;
+      colCounts[col]++;
       currentGrid[index] = 1;
 
       // Check if placing a 1 is valid (does not violate row or column constraints)
-      if (isValid(newRowCounts, newColCounts)) {
+      if (isValid(rowCounts, colCounts)) {
         // Update available counts and continue with backtracking
         availableRows[row]--;
         availableCols[col]--;
-        backtrack(index + 1, currentGrid, newRowCounts, newColCounts);
+        backtrack(index + 1, currentGrid, rowCounts, colCounts);
         availableRows[row]++;
         availableCols[col]++;
       }
-      currentGrid[index] = 0; // Reset cell to 0 if not valid
+
+      // Revert the changes
+      rowCounts[row]--;
+      colCounts[col]--;
+      currentGrid[index] = 0;
     }
   }
 
